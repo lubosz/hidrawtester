@@ -1,3 +1,67 @@
 #!/usr/bin/env python3
 
-print("devices")
+import os
+from collections import OrderedDict
+from subprocess import Popen, PIPE
+
+vendors = OrderedDict()
+
+class Vendor():
+  def __init__(self):
+    self.name = ""
+    self.devices = OrderedDict()
+
+class Device():
+  def __init__(self):
+    self.name = ""
+    self.hidraw = []
+    self.vendor_id = ""
+    self.product_id = ""
+
+def hidraw_info(device, key):
+  return open(realpath("/sys/class/hidraw/" + device)+ "/../../../../" + key).read().strip()
+
+def realpath(path):
+  return bash(["realpath", path])
+
+def bash(command):
+  (stdout, stderr) = Popen(command, stdout=PIPE).communicate()
+  return (stdout.decode().strip())
+
+def dev_from_hidraw(name):
+  dev = Device()
+  dev.name = hidraw_info(filename, "product")
+  dev.vendor_id = hidraw_info(filename, "idVendor")
+  dev.product_id = hidraw_info(filename, "idProduct")
+  dev.hidraw.append(name)
+  return dev
+
+
+for dirname, dirnames, filenames in os.walk('/dev'):
+    for filename in filenames:
+        if "hidraw" in filename:
+          dev = dev_from_hidraw(filename)
+          
+          if dev.vendor_id not in vendors.keys():
+            vendors[dev.vendor_id] = Vendor()
+
+          try:
+            vendors[dev.vendor_id].name = hidraw_info(filename, "manufacturer")
+          except FileNotFoundError:
+            print("warning: No manufacturer in %s" % filename)
+          
+          if dev.product_id not in vendors[dev.vendor_id].devices.keys():
+            vendors[dev.vendor_id].devices[dev.product_id] = dev
+          else:
+            vendors[dev.vendor_id].devices[dev.product_id].hidraw.append(filename)
+          
+print("Devices")
+
+for v, ven in vendors.items():
+    print (v, ven.name)
+    for d, dev in ven.devices.items():
+      print ("\t+", d, dev.name)
+      for hid in dev.hidraw:
+        print ("\t\t+", hid)
+
+
