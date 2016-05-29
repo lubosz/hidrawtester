@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+from stat import *
 from collections import OrderedDict
 from subprocess import Popen, PIPE
 
@@ -62,6 +63,6 @@ for v, ven in vendors.items():
     for d, dev in ven.devices.items():
       print ("\t+", d, dev.name)
       for hid in dev.hidraw:
-        print ("\t\t+", hid)
-
+        rights = (oct(os.stat("/dev/" + hid)[ST_MODE])[-3:])
+        print ("\t\t+", hid, "rights:", rights)
 
