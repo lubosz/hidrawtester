@@ -1,29 +1,14 @@
 #!/usr/bin/env python3
 
-import os
+import os, operator
 from stat import *
 from subprocess import Popen, PIPE
+from collections import OrderedDict
 
 buses = []
 
 def lsusb(dev):
   return bash(["lsusb", "-D", dev])
-
-class Bus():
-	num = 0
-	devices = []
-
-class Device():
-	info = {}
-	path = ""
-	
-	def get_info(self, key):
-		info[key] = find_value_in_lsusb(lsusb(dev.path), key)
-	
-	def get_rights():
-    stat = os.stat(devpath)
-    return = (oct(stat[ST_MODE])[-3:])
-
 
 def bash(command):
   (stdout, stderr) = Popen(command, stdout=PIPE).communicate()
@@ -40,28 +25,43 @@ def find_value_in_lsusb(usbinfo, key):
         value = ""
   return value
 
+class Bus():
+	def __init__(self, num):
+	  self.num = num
+	  self.devices = []
+
+class Device():
+  def __init__(self, bus, num):
+    self.info = OrderedDict()
+    self.num = num
+    self.path = '/dev/bus/usb/%s/%s' % (d, f)
+        
+    info_keys = ["idProduct", "idVendor", "iManufacturer", "iProduct"]
+    for key in info_keys:
+      self.store_info(key)
+
+  def store_info(self, key):
+    self.info[key] = find_value_in_lsusb(lsusb(self.path), key)
+
+  def get_rights(self):
+    stat = os.stat(self.path)
+    return (oct(stat[ST_MODE])[-3:])
+
 for x0, dirnames, x1 in os.walk('/dev/bus/usb'):
-    for d in dirnames:
-    		bus = Bus()
-    		bus.num = d
+  for d in dirnames:
+    bus = Bus(d)
+    buses.append(bus)
+    for x2, x3, filenames in os.walk('/dev/bus/usb/%s' % d):
+      for f in filenames:
+        bus.devices.append(Device(d, f))
+    bus.devices.sort(key=operator.attrgetter('num'))
 
-        for x2, x3, filenames in os.walk('/dev/bus/usb/%s' % d):
-          for f in filenames:
-            
-            dev = Device()
-            dev.path = '/dev/bus/usb/%s/%s' % (d, f)
-            
-            
-            product = find_value_in_lsusb(lsusb(dev.path), "idProduct")
-            
-            if not vendor:
-              vendor = find_value_in_lsusb(lsusb(dev.path), "iManufacturer")
-            
-            if not product:
-              product = find_value_in_lsusb(lsusb(dev.path), "iProduct")
-          
+buses.sort(key=operator.attrgetter('num'))
 
-            print("\tDevice", f, "Rights:", dev.get_rights())
-            
-            print("\t", vendor, product)
-            
+for bus in buses:
+  print("Bus %s" % bus.num)
+  for dev in bus.devices:
+    print ("\tDev %s (%s) %s" % (dev.num, dev.get_rights(), dev.path))
+    for k, v in dev.info.items():
+      if v:
+        print("\t\t%s %s" % (k.ljust(len("iManufacturer")), v))
