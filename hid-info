@@ -1,0 +1,37 @@
+#!/usr/bin/env python2
+
+#import hidraw
+
+import hid
+
+from IPython import embed
+
+
+def hex_string_to_ints_3chars(x):
+  return str(int(x, 16)).zfill(3)
+
+def hid_path_to_unix_path(p):
+  parts = p.split(":")
+  
+  a = hex_string_to_ints_3chars(parts[0])
+  b = hex_string_to_ints_3chars(parts[1])
+  
+  return "/dev/bus/usb/%s/%s" % (a, b)
+
+
+#embed()
+
+dev_path = "0003:000d:00"
+
+
+print (hid_path_to_unix_path(dev_path))
+
+#0003:000d:00
+
+#/dev/bus/usb/003/013
+
+d = hid.device()
+d.open_path(dev_path)
+
+
+

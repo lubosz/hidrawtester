@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+
+import os
+from stat import *
+from subprocess import Popen, PIPE
+
+buses = []
+
+def lsusb(dev):
+  return bash(["lsusb", "-D", dev])
+
+class Bus():
+	num = 0
+	devices = []
+
+class Device():
+	info = {}
+	path = ""
+	
+	def get_info(self, key):
+		info[key] = find_value_in_lsusb(lsusb(dev.path), key)
+	
+	def get_rights():
+    stat = os.stat(devpath)
+    return = (oct(stat[ST_MODE])[-3:])
+
+
+def bash(command):
+  (stdout, stderr) = Popen(command, stdout=PIPE).communicate()
+  return (stdout.decode().strip())
+
+def find_value_in_lsusb(usbinfo, key):
+  value = ""
+  for line in usbinfo.split("\n"):
+    if key in line:
+      value = line.replace(key, "").strip()
+      try:
+        value = value.split(" ", 1)[1].strip()
+      except:
+        value = ""
+  return value
+
+for x0, dirnames, x1 in os.walk('/dev/bus/usb'):
+    for d in dirnames:
+    		bus = Bus()
+    		bus.num = d
+
+        for x2, x3, filenames in os.walk('/dev/bus/usb/%s' % d):
+          for f in filenames:
+            
+            dev = Device()
+            dev.path = '/dev/bus/usb/%s/%s' % (d, f)
+            
+            
+            product = find_value_in_lsusb(lsusb(dev.path), "idProduct")
+            
+            if not vendor:
+              vendor = find_value_in_lsusb(lsusb(dev.path), "iManufacturer")
+            
+            if not product:
+              product = find_value_in_lsusb(lsusb(dev.path), "iProduct")
+          
+
+            print("\tDevice", f, "Rights:", dev.get_rights())
+            
+            print("\t", vendor, product)
+            
