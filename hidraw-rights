@@ -18,9 +18,14 @@ class Device():
     self.hidraw = []
     self.vendor_id = ""
     self.product_id = ""
+    self.busnum = 0
+    self.realpath = ""
+
+def realpath_device(device):
+  return realpath("/sys/class/hidraw/" + device)
 
 def hidraw_info(device, key):
-  return open(realpath("/sys/class/hidraw/" + device)+ "/../../../../" + key).read().strip()
+  return open(realpath_device(device) + "/../../../../" + key).read().strip()
 
 def realpath(path):
   return bash(["realpath", path])
@@ -51,6 +56,13 @@ for dirname, dirnames, filenames in os.walk('/dev'):
           except FileNotFoundError:
             print("warning: No manufacturer in %s" % filename)
           
+          try:
+            dev.busnum = hidraw_info(filename, "busnum")
+          except FileNotFoundError:
+            print("warning: No busnum in %s" % filename)
+          
+          dev.realpath = realpath_device(filename)
+          
           if dev.product_id not in vendors[dev.vendor_id].devices.keys():
             vendors[dev.vendor_id].devices[dev.product_id] = dev
           else:
@@ -62,6 +74,8 @@ for v, ven in vendors.items():
     print (v, ven.name)
     for d, dev in ven.devices.items():
       print ("\t+", d, dev.name)
+      print ("\t Bus", dev.busnum)
+      print ("\t Path", dev.realpath)
       for hid in dev.hidraw:
         rights = (oct(os.stat("/dev/" + hid)[ST_MODE])[-3:])
         print ("\t\t+", hid, "rights:", rights)
