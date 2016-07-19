@@ -36,7 +36,7 @@ class Device():
     self.num = num
     self.path = '/dev/bus/usb/%s/%s' % (d, f)
         
-    info_keys = ["idProduct", "idVendor", "iManufacturer", "iProduct"]
+    info_keys = ["idProduct", "idVendor", "iManufacturer", "iProduct", "bDeviceClass"]
     for key in info_keys:
       self.store_info(key)
 
